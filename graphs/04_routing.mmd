@@ -1,0 +1,22 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	screener(screener)
+	risk_desk(risk_desk)
+	journal(journal)
+	llm_call_router(llm_call_router)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> llm_call_router;
+	llm_call_router -.-> journal;
+	llm_call_router -.-> risk_desk;
+	llm_call_router -.-> screener;
+	journal --> __end__;
+	risk_desk --> __end__;
+	screener --> __end__;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc
