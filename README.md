@@ -5,6 +5,9 @@ A runnable walkthrough of the LangGraph guide
 implemented with the **Graph API** and running against **Ollama Cloud**
 (`https://ollama.com`, no local runtime, no model downloads).
 
+**New to LLMs or LangGraph?** Start with [TUTORIAL.md](TUTORIAL.md) — a
+from-scratch walkthrough of the concepts, the seven patterns, and the pitfalls.
+
 ## Setup
 
 ```bash
