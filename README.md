@@ -52,7 +52,8 @@ SMH`), so runs are deterministic, offline, and rate-limit free.
 
 ```bash
 .venv/bin/python 01_augmentations.py      # or one at a time, in any order
-./run_all.sh                              # all seven, logs to logs/
+.venv/bin/python 08_event_log.py          # exercise: event log -> incident report
+./run_all.sh                              # the seven patterns, logs to logs/
 ```
 
 Each script prints its output and writes a Mermaid diagram to `graphs/*.mmd`
@@ -76,6 +77,36 @@ path → agent** (07). Reach for 05 when the number of subtasks is only known at
 runtime (the planner usually asks for 5–7 sections), and 06 when there is a
 success criterion you can grade — here, stop defined, R ≥ 2, size inside the 1%
 budget.
+
+## Exercise: event log → incident report
+
+`08_event_log.py` applies the same structured-output idea to a long,
+custom-format machine log, where no single line contains the answer:
+
+```
+parse (your adapter) -> aggregate (Python) -> label + correlate (2 LLM calls)
+                     -> verify + fill in (Python)
+```
+
+- `data/litho_events.log` is a synthetic 600-line log from a lithography tool:
+  12 subsystems, one cross-subsystem fault chain, red herrings and malformed
+  lines.
+- Aggregation collapses ~600 events to ~23 rows *before* prompting, so the run
+  costs two calls no matter how long the log is.
+- The model returns event ids, labels and causal links. Python owns every count,
+  timestamp and line number, and checks that every cited id exists.
+- Format is config, not code: `--format bracket|jsonl|kv|auto|spec.json`.
+  `formats/example_custom.json` is a template, and
+  `data/generate_litho_events.py` can make a different log.
+
+```bash
+.venv/bin/python 08_event_log.py --dry-run     # parse + aggregate, no LLM
+.venv/bin/python 08_event_log.py --format auto
+.venv/bin/python 08_event_log.py mytool.log --out events.jsonl
+```
+
+TUTORIAL.md Part 8 has the exercise tiers: write a spec for your own log, break
+the verifier, and wrap the pipeline in a graph.
 
 ## Helpers (`common.py`)
 

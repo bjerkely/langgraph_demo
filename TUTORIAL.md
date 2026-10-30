@@ -1,7 +1,8 @@
 # A beginner's tutorial to this repository
 
-This repo is a set of seven tiny programs that each demonstrate one way to
-organise calls to a large language model (LLM). They all use the same domain —
+This repo is a set of seven tiny pattern programs that each demonstrate one way
+to organise calls to a large language model (LLM), plus one longer exercise
+(`08_event_log.py`) on a machine event log. They all use the same domain —
 planning a $50k swing trade — so you can compare the shapes without learning new
 vocabulary every time.
 
@@ -18,7 +19,7 @@ Part 4  Reading LangGraph code: the six calls you need
 Part 5  Prompt engineering lessons baked into this repo
 Part 6  The gotchas: what actually breaks in production
 Part 7  Run it
-Part 8  Exercises
+Part 8  Exercises (includes 08, the event-log exercise)
 Part 9  Glossary
 ```
 
@@ -90,6 +91,11 @@ sentence you have to parse.
 
 **The mental model:** structured output is how you get data *out* of an LLM and
 into the rest of your program.
+
+> At scale the problem inverts. With a 600-line machine log you cannot ask the
+> model to read everything, so you **structure the input first** — parse and
+> aggregate in Python — and ask the model only for judgement.
+> `08_event_log.py` is that version of this section.
 
 ### 1.2 Tool calling: the model asks Python to do the arithmetic
 
@@ -620,6 +626,29 @@ Do these in a scratch copy; they are ordered by difficulty.
 6. **Remove the safety net.** Point script 04 at
    `llm.with_structured_output(Route)` instead of `structured(Route)` and run it
    a few times. This is the fastest way to feel why Part 6.2 exists.
+7. **Make the event log yours** (`08_event_log.py`). The script turns a
+   lithography tool's event log into a verified incident report. It runs on the
+   synthetic fixture; the exercise is to make it work on a log it was not written
+   for. Five tiers, in order:
+   - **Format.** Write a `FormatSpec` for your log — copy
+     `formats/example_custom.json`: a regex with named groups `ts`, `subsystem`,
+     `severity`, `event_id`, plus a payload style. Run `--dry-run` until the skip
+     count is small and the sampled lines look right.
+   - **Scale.** Change `--group-window` and watch the group count. Too fine and
+     the prompt gets expensive; too coarse and two incidents merge. The
+     aggregation key is the design decision, not the prompt.
+   - **Safety net.** Delete the `ids exist in log` check in `verify()` and run a
+     few times. A model that never saw a line will still cite a plausible event
+     id. Watch it pass, then restore the check.
+   - **Graph.** The pipeline is `aggregate → label → correlate → verify`. Wrap it
+     in a `StateGraph` with a conditional edge back to `correlate` when a check
+     fails, reusing 06's cycle and `MAX_ATTEMPTS`. The loop is then justified by a
+     checkable rubric instead of an LLM's opinion.
+   - **Stretch.** Use structured output to induce the `FormatSpec` itself from 20
+     sample lines, cache the JSON, and parse deterministically afterwards.
+
+   > At scale, structure the input before you structure the output: parse and
+   > count in Python, ask the model only for meaning.
 
 ---
 
@@ -631,6 +660,8 @@ Do these in a scratch copy; they are ordered by difficulty.
 | **Prompt** | The text you send. A list of `SystemMessage` + `HumanMessage` is a prompt with roles. |
 | **System message** | Standing instructions ("you are a risk manager"). |
 | **Structured output** | Forcing the reply into a Pydantic schema instead of prose. |
+| **Event log** | Timestamped records emitted by a machine; many lines, far fewer distinct events. |
+| **Aggregation** | Collapsing repeated events into one row (count, first/last, min/max) before prompting. |
 | **Tool / function calling** | The model requests a Python function with arguments; your code runs it. |
 | **Agent** | A loop where the *model* decides which tool runs next. |
 | **Workflow** | A graph whose path is fixed in code, with model calls inside the nodes. |
@@ -653,5 +684,6 @@ Do these in a scratch copy; they are ordered by difficulty.
 - The upstream guide: <https://docs.langchain.com/oss/python/langgraph/workflows-agents>
 - Add persistence (`checkpointer`) so a graph can resume after a crash.
 - Add `interrupt()` for human-in-the-loop approval on pattern 06's escalation.
+- Run `08_event_log.py` against a real machine log and write a `FormatSpec` for it.
 - Add a real data tool to pattern 07 and watch how the agent's behaviour changes
   when a tool can fail.

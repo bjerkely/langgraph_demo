@@ -1,0 +1,8 @@
+{
+  "name": "pipe_vendor",
+  "kind": "regex",
+  "pattern": "^(?P<ts>\\S+ \\S+) \\| (?P<subsystem>[A-Z_]+) \\| (?P<severity>[A-Z]+) \\| (?P<event_id>[A-Z]+-\\d+) \\| (?P<rest>.*)$",
+  "timestamp_formats": ["%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%dT%H:%M:%S.%f"],
+  "payload": "kv",
+  "field_map": {}
+}
